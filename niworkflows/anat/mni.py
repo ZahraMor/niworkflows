@@ -145,7 +145,7 @@ class RobustMNINormalization(BaseInterface):
             except Exception as exc:
                 # If registration fails, note this in the log.
                 NIWORKFLOWS_LOG.warn(
-                        'Retry #%d failed: %s.', self.retry, exc)
+                    'Retry #%d failed: %s.', self.retry, exc)
 
             errfile = op.join(runtime.cwd, 'stderr.nipype')
             outfile = op.join(runtime.cwd, 'stdout.nipype')
@@ -370,42 +370,43 @@ def create_cfm(in_file, out_path, lesion_mask, global_mask=True):
     -----
     in_file and lesion_mask must be in the same
     image space and have the same dimensions
+
     """
-    import nibabel as nb
     import os
-    import subprocess
+    import numpy as np
+    import nibabel as nb
+    from niworkflows.nipype.utils.filemanip import fname_presuffix
+
+    if not global_mask and not lesion_mask:
+        NIWORKFLOWS_LOG.warning(
+            'No lesion mask was provided and global_mask not requested, '
+            'therefore the original mask was not modified.')
 
     # Load the input image
     in_nii = nb.load(in_file)
+    mask_data = in_nii.get_data()
+
     # If we want a global mask, create one based on the input image.
-    if global_mask is True:
-        in_data = in_nii.get_data()
-        # Set all voxels in the input image to 1
-        in_data[:] = 1
-        # Replace the original input image.
-        in_nii = nb.Nifti1Image(in_data, in_nii.affine, in_nii.header)
+    # Force global mask if lesion_mask is None
+    if global_mask or lesion_mask is None:
+        # Create mask of ones with the shape of input data
+        mask_data = np.ones_like(mask_data, dtype=np.uint8)
 
     # If a lesion mask was provided, combine it with the secondary mask.
     if lesion_mask is not None:
-        # Reorient the lesion mask and write it to disk
+        # Reorient the lesion mask and get contents
         lm_nii = nb.as_closest_canonical(nb.load(lesion_mask))
-        lm_nii.to_filename("lesion_mask_reorient.nii.gz")
-        lm_reorient = os.path.abspath("lesion_mask_reorient.nii.gz")
-        if global_mask is True:
-            # Write the global mask to disk
-            in_nii.to_filename("global_mask.nii.gz")
-            # Use this as the secondary mask
-            secondary_mask = os.path.abspath("global_mask.nii.gz")
-        else:
-            # Assume in_file is already a mask. Use this as the secondary mask.
-            secondary_mask = in_file
-        # Subtract the reoriented lesion mask from the secondary mask.
-        res = subprocess.call(["ImageMath", "3", out_path, "-",
-            secondary_mask, lm_reorient])
-    else:
-        assert (global_mask is True), "If no lesion mask is provided, global_mask must be True"
-        # Write the global mask to disk.
-        cfm_nii = in_nii
-        cfm_nii.to_filename(out_path)
+        lm_data = lm_nii.get_data()
 
-    return os.path.abspath(out_path)
+        # Subtract lesion mask from input mask
+        mask_data -= lm_data
+        mask_data[mask_data < 0] = 0
+
+    out_file = fname_presuffix(in_file, suffix='lesionmask',
+                               newpath=os.getcwd())
+
+    # Save newly generated mask
+    nb.Nifti1Image(mask_data, in_nii.affine, in_nii.header).to_filename(
+        out_file)
+
+    return out_file
