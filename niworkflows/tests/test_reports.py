@@ -24,9 +24,6 @@ MNI_DIR = get_mni_template_ras()
 MNI_2MM = os.path.join(MNI_DIR, 'MNI152_T1_2mm.nii.gz')
 DS003_DIR = get_ds003_downsampled()
 
-# Tests are linear, so don't worry about leaving space for a control thread
-nthreads = min(8, cpu_count())
-
 def stage_artifacts(filename, new_filename):
     """ filename: the name of the file to be saved as an artifact.
         new_filename: what to call the artifact (which will be saved in the
@@ -81,7 +78,7 @@ class TestSimpleShowMaskRPT(unittest.TestCase):
 class TestBrainExtractionRPT(unittest.TestCase):
     ''' tests the report capable version of ANTS's BrainExtraction interface, using mni as input'''
 
-    def test_generate_report(self):
+    def test_generate_report(self, nthreads):
         ''' test of BrainExtractionRPT under basic conditions:
                 - dimension=3
                 - use_floatingpoint_precision=1,
@@ -99,7 +96,7 @@ class TestBrainExtractionRPT(unittest.TestCase):
                 extraction_registration_mask=_template_name('T_template0_BrainCerebellumRegistrationMask.nii.gz'),
                 out_prefix='testBrainExtractionRPT',
                 debug=True, # run faster for testing purposes
-                num_threads=cpu_count()
+                num_threads=nthreads
             ),
             'testANTSBrainExtraction.html'
         )
