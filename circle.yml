@@ -13,17 +13,20 @@ machine:
 dependencies:
   cache_directories:
     - "~/data"
+    - "~/docker"
 
   pre:
     - mkdir -p ~/data/ ~/docker ${CIRCLE_TEST_REPORTS}/py2 ${CIRCLE_TEST_REPORTS}/py3
+    - docker load --input $HOME/docker/cache.tar || true
     - mkdir -p $SCRATCH && sudo setfacl -d -m group:ubuntu:rwx $SCRATCH && sudo setfacl -m group:ubuntu:rwx $SCRATCH
     - mkdir -p $SCRATCH/py2 $SCRATCH/py3
     - git submodule init && (git submodule update || true)
     - git submodule sync && git -C nipype fetch origin && git submodule update
   override:
-    - docker pull poldracklab/fmriprep:latest || true
     - docker build --rm=false -t niworkflows:py3 .
     - docker build --rm=false -t niworkflows:py2 --build-arg PYTHON_MAJOR=2 .
+    - docker save -o $HOME/docker/cache.tar ubuntu:xenial-20161213 niworkflows:py3 niworkflows:py2
+        timeout: 3200
 test:
   override:
     - bash .circle/pytests.sh :
