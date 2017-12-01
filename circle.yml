@@ -16,7 +16,7 @@ dependencies:
     - "~/docker"
 
   pre:
-    - mkdir -p ~/data/ ~/docker ${CIRCLE_TEST_REPORTS}/py2 ${CIRCLE_TEST_REPORTS}/py3
+    - mkdir -p ~/data/ ${HOME}/docker ${CIRCLE_TEST_REPORTS}/py2 ${CIRCLE_TEST_REPORTS}/py3
     - docker load --input $HOME/docker/cache.tar || true
     - mkdir -p $SCRATCH && sudo setfacl -d -m group:ubuntu:rwx $SCRATCH && sudo setfacl -m group:ubuntu:rwx $SCRATCH
     - mkdir -p $SCRATCH/py2 $SCRATCH/py3
