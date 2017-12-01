@@ -25,7 +25,7 @@ dependencies:
   override:
     - docker build --rm=false -t niworkflows:py3 .
     - docker build --rm=false -t niworkflows:py2 --build-arg PYTHON_MAJOR=2 .
-    - docker save -o $HOME/docker/cache.tar ubuntu:xenial-20161213 niworkflows:py3 niworkflows:py2
+    - docker save -o $HOME/docker/cache.tar ubuntu:xenial-20161213 niworkflows:py3 niworkflows:py2 :
         timeout: 3200
 test:
   override:
