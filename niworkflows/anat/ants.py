@@ -18,7 +18,8 @@ from packaging.version import parse as parseversion, Version
 from nipype.pipeline import engine as pe
 from nipype.interfaces import utility as niu
 from nipype.interfaces.fsl.maths import ApplyMask
-from nipype.interfaces.ants import N4BiasFieldCorrection, Atropos, MultiplyImages
+from nipype.interfaces.ants import (
+    N4BiasFieldCorrection, Atropos, MultiplyImages, Registration)
 
 # niworkflows
 from ..interfaces.ants import (
@@ -27,10 +28,7 @@ from ..interfaces.ants import (
     AI,
     ThresholdImage,
 )
-from ..interfaces.fixes import (
-    FixHeaderRegistration as Registration,
-    FixHeaderApplyTransforms as ApplyTransforms,
-)
+from ..interfaces.fixes import FixHeaderApplyTransforms as ApplyTransforms
 
 ATROPOS_MODELS = {
     'T1w': OrderedDict([
